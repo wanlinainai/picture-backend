@@ -146,6 +146,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         return currentUser;
     }
+
+    /**
+     * 用户注销
+     * @param request
+     * @return
+     */
+    @Override
+    public boolean logout(HttpServletRequest request) {
+        Object user = request.getSession().getAttribute(USER_LOGIN_STATE);
+        User currentUser = (User) user;
+        if (currentUser == null) {
+            throw new BussinessException(ErrorCode.OPERATION_ERROR, "未登录");
+        }
+
+        request.getSession().removeAttribute(USER_LOGIN_STATE);
+
+        return true;
+    }
 }
 
 

@@ -1,11 +1,12 @@
 package com.yupi.yupicturebackend.controller;
 
+import com.yupi.yupicturebackend.annotation.AuthCheck;
 import com.yupi.yupicturebackend.common.BaseResponse;
 import com.yupi.yupicturebackend.common.ResultUtils;
 import com.yupi.yupicturebackend.exception.ErrorCode;
 import com.yupi.yupicturebackend.exception.ThrowUtils;
-import com.yupi.yupicturebackend.model.dto.UserLoginRequest;
-import com.yupi.yupicturebackend.model.dto.UserRegisterRequest;
+import com.yupi.yupicturebackend.model.dto.user.UserLoginRequest;
+import com.yupi.yupicturebackend.model.dto.user.UserRegisterRequest;
 import com.yupi.yupicturebackend.model.entity.User;
 import com.yupi.yupicturebackend.model.vo.LoginUserVo;
 import com.yupi.yupicturebackend.service.UserService;
@@ -67,5 +68,18 @@ public class UserController {
     public BaseResponse<LoginUserVo> getLoginUser(HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(userService.getLoginUserVo(loginUser));
+    }
+
+    /**
+     * 注销当前用户登录状态
+     * @param request
+     * @return
+     */
+    @PostMapping("/logout")
+    @AuthCheck(mustRole = "admin")
+    public BaseResponse<Boolean> logout(HttpServletRequest request) {
+        ThrowUtils.throwIf(request == null, ErrorCode.PARAMS_ERROR);
+        boolean result = userService.logout(request);
+        return ResultUtils.success(result);
     }
 }
