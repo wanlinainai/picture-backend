@@ -211,7 +211,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.like(ObjUtil.isNotNull(userName), "userName", userName);
         queryWrapper.like(ObjUtil.isNotNull(userAccount), "userAccount", userAccount);
         queryWrapper.like(ObjUtil.isNotNull(userProfile), "userProfile", userProfile);
-        queryWrapper.orderBy(ObjUtil.isNotNull(sortField), sortOrder.equals("ascend"), sortOrder);
+        queryWrapper.orderBy(ObjUtil.isNotNull(sortField), "ascend".equals(sortOrder), sortField);
         return queryWrapper;
     }
 }
