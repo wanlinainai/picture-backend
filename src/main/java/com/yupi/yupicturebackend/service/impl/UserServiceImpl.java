@@ -1,6 +1,8 @@
 package com.yupi.yupicturebackend.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -8,9 +10,11 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.yupi.yupicturebackend.exception.BussinessException;
 import com.yupi.yupicturebackend.exception.ErrorCode;
+import com.yupi.yupicturebackend.model.dto.user.UserQueryRequest;
 import com.yupi.yupicturebackend.model.entity.User;
 import com.yupi.yupicturebackend.model.enums.UserRoleEnum;
 import com.yupi.yupicturebackend.model.vo.LoginUserVo;
+import com.yupi.yupicturebackend.model.vo.UserVo;
 import com.yupi.yupicturebackend.service.UserService;
 import com.yupi.yupicturebackend.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.yupi.yupicturebackend.constant.UserConstant.USER_LOGIN_STATE;
 
@@ -124,6 +131,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return loginUserVo;
     }
 
+    @Override
+    public UserVo getUserVo(User user) {
+        if (Objects.isNull(user)) {
+            return null;
+        }
+        UserVo userVo = new UserVo();
+        BeanUtil.copyProperties(user, userVo);
+        return userVo;
+    }
+
+    @Override
+    public List<UserVo> getUserVoList(List<User> userList) {
+        if (CollUtil.isEmpty(userList)) {
+            return Collections.emptyList();
+        }
+        return userList.stream().map(this::getUserVo).collect(Collectors.toList());
+    }
+
     /**
      * 获取当前登录用户
      * @param request
@@ -163,6 +188,31 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         request.getSession().removeAttribute(USER_LOGIN_STATE);
 
         return true;
+    }
+
+    @Override
+    public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
+        if (userQueryRequest == null) {
+            throw new BussinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
+        }
+        Long id = userQueryRequest.getId();
+        String userName = userQueryRequest.getUserName();
+        String userAccount = userQueryRequest.getUserAccount();
+        String userProfile = userQueryRequest.getUserProfile();
+        String userRole = userQueryRequest.getUserRole();
+        Long current = userQueryRequest.getCurrent();
+        Long pageSize = userQueryRequest.getPageSize();
+        String sortField = userQueryRequest.getSortField();
+        String sortOrder = userQueryRequest.getSortOrder();
+        // 拼接条件
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(ObjUtil.isNotNull(id), "id", id);
+        queryWrapper.eq(ObjUtil.isNotNull(userRole), "userRole", userRole);
+        queryWrapper.like(ObjUtil.isNotNull(userName), "userName", userName);
+        queryWrapper.like(ObjUtil.isNotNull(userAccount), "userAccount", userAccount);
+        queryWrapper.like(ObjUtil.isNotNull(userProfile), "userProfile", userProfile);
+        queryWrapper.orderBy(ObjUtil.isNotNull(sortField), sortOrder.equals("ascend"), sortOrder);
+        return queryWrapper;
     }
 }
 
