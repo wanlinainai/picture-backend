@@ -84,7 +84,6 @@ public class UserController {
      * @return
      */
     @PostMapping("/logout")
-    @AuthCheck(mustRole = "admin")
     public BaseResponse<Boolean> logout(HttpServletRequest request) {
         ThrowUtils.throwIf(request == null, ErrorCode.PARAMS_ERROR);
         boolean result = userService.logout(request);
