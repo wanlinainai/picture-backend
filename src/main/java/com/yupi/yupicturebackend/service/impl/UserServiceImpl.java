@@ -214,6 +214,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.orderBy(ObjUtil.isNotNull(sortField), "ascend".equals(sortOrder), sortField);
         return queryWrapper;
     }
+
+    @Override
+    public boolean isAdmin(User user) {
+        return user !=null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
+    }
 }
 
 

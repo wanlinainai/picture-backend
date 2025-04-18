@@ -1,11 +1,16 @@
 package com.yupi.yupicturebackend.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.yupi.yupicturebackend.model.dto.picture.PictureQueryRequest;
 import com.yupi.yupicturebackend.model.dto.picture.PictureUploadRequest;
 import com.yupi.yupicturebackend.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.yupi.yupicturebackend.model.entity.User;
 import com.yupi.yupicturebackend.model.vo.PictureVO;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
 * @author a1234
@@ -17,4 +22,28 @@ public interface PictureService extends IService<Picture> {
      * 上传图片
      */
     PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser);
+
+    /**
+     * 将请求转换成QueryWrapper对象
+     */
+    public QueryWrapper<Picture> getQueryWrapper(PictureQueryRequest pictureQueryRequest);
+
+    /**
+     * 获取单个图片封装
+     */
+    PictureVO getPictureVO(Picture picture, HttpServletRequest httpServletRequest);
+
+    /**
+     * 分页获取图片封装
+     * @param picturePage
+     * @param request
+     * @return
+     */
+    Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request);
+
+    /**
+     * 校验图片信息（编辑、更新时候）
+     * @param picture
+     */
+    public void validPicture(Picture picture);
 }
