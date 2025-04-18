@@ -10,11 +10,17 @@ import com.yupi.yupicturebackend.constant.UserConstant;
 import com.yupi.yupicturebackend.exception.BussinessException;
 import com.yupi.yupicturebackend.exception.ErrorCode;
 import com.yupi.yupicturebackend.manager.CosManager;
+import com.yupi.yupicturebackend.model.dto.picture.PictureUploadRequest;
+import com.yupi.yupicturebackend.model.entity.User;
+import com.yupi.yupicturebackend.model.vo.PictureVO;
+import com.yupi.yupicturebackend.service.PictureService;
+import com.yupi.yupicturebackend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
@@ -23,73 +29,30 @@ import java.io.IOException;
  * @ClassName: FileController
  * @Author: zxh
  * @Date: 2025/4/18 21:37
- * @Description: 文件接口层
+ * @Description: 图片接口层
  */
 @RestController
-@RequestMapping("/file")
+@RequestMapping("/picture")
 @Slf4j
-public class FileController {
+public class PictureController {
     @Resource
-    private CosManager cosManager;
+    private PictureService pictureService;
 
+    @Resource
+    private UserService userService;
     /**
-     * 文件上传
-     * @param multipartFile
-     * @return
+     * 上传图片（可重新上传）
      */
+    @PostMapping("/upload")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    @PostMapping("/test/upload")
-    public BaseResponse<String> testUploadFile(@RequestPart("file")MultipartFile multipartFile) {
-        // 指定文件目录
-        String fileName = multipartFile.getOriginalFilename();
-        String filePath = String.format("/test/%s", fileName);
-
-        File file = null;
-        try {
-            file = File.createTempFile(filePath, null);
-            multipartFile.transferTo(file);
-            cosManager.putObject(filePath, file);
-            // 返回可以访问地址
-            return ResultUtils.success(filePath);
-        } catch (IOException e) {
-            log.error("File upload failed, filePath = " + filePath);
-            throw new BussinessException(ErrorCode.SYSTEM_ERROR, "文件上传失败");
-        } finally {
-            if (file != null) {
-                // 删除临时文件
-                boolean delete = file.delete();
-                if (!delete) {
-                    log.error("File delete failed, filePath = " + filePath);
-                }
-            }
-        }
+    public BaseResponse<PictureVO> uploadPicture(
+            @RequestPart("file") MultipartFile multipartFile,
+            PictureUploadRequest pictureUploadRequest,
+            HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        PictureVO pictureVO = pictureService.uploadPicture(multipartFile, pictureUploadRequest, loginUser);
+        return ResultUtils.success(pictureVO);
     }
 
-    /**
-     * 文件下载
-     */
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    @GetMapping("/test/download")
-    public void testDownloadFile(String filePath, HttpServletResponse response) throws IOException {
-        COSObjectInputStream cosObjectInput = null;
-        try {
-            COSObject cosObject = cosManager.getObject(filePath);
-            cosObjectInput = cosObject.getObjectContent();
-            byte[] bytes = IOUtils.toByteArray(cosObjectInput);
-            response.setContentType("application/octet-stream;charset=UTF-8");
-            response.setHeader("Content-Disposition", "attachment;filename=" + filePath);
-
-            // 写入响应
-            response.getOutputStream().write(bytes);
-            response.getOutputStream().flush();
-        } catch (Exception e) {
-            log.error("file download failed, filePath = " + filePath, e);
-            throw new BussinessException(ErrorCode.SYSTEM_ERROR, "下载失败");
-        } finally {
-            if (cosObjectInput != null) {
-                cosObjectInput.close();
-            }
-        }
-    }
 
 }
