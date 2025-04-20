@@ -129,7 +129,7 @@ public class PictureController {
     }
 
     /**
-     * 分页获取图片列表
+     * 分页获取图片列表(管理员)
      */
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
@@ -143,6 +143,22 @@ public class PictureController {
         // 获取封装类
         return ResultUtils.success(pictureService.getPictureVOPage(picturePage, request));
 
+    }
+
+    /**
+     * 分页获取图片列表(用户)
+     * @param pictureQueryRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/list/page/vo")
+    public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
+        Long current = pictureQueryRequest.getCurrent();
+        Long size = pictureQueryRequest.getPageSize();
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+
+        Page<Picture> picturePage = pictureService.page(new Page<>(current, size), pictureService.getQueryWrapper(pictureQueryRequest));
+        return ResultUtils.success(pictureService.getPictureVOPage(picturePage, request));
     }
 
     /**
@@ -183,8 +199,8 @@ public class PictureController {
     @GetMapping("/tag_category")
     public BaseResponse<PictureTagCategory> listPictureTagCategory() {
         PictureTagCategory pictureTagCategory = new PictureTagCategory();
-        pictureTagCategory.setTagList(Arrays.asList("热门", "搞笑", "生活", "高清", "艺术", "校园", "背景", "简历", "创意"));
-        pictureTagCategory.setCategoryList(Arrays.asList("模板", "电商", "表情包", "素材", "海报"));
+        pictureTagCategory.setCategoryList(Arrays.asList("热门", "搞笑", "生活", "高清", "艺术", "校园", "背景", "简历", "创意"));
+        pictureTagCategory.setTagList(Arrays.asList("模板", "电商", "表情包", "素材", "海报"));
         return ResultUtils.success(pictureTagCategory);
     }
 }
