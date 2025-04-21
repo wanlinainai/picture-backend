@@ -108,7 +108,7 @@ public class Picture implements Serializable {
     /**
      * 审核人 id
      */
-    private Long reviewId;
+    private Long reviewerId;
 
     /**
      * 审核时间

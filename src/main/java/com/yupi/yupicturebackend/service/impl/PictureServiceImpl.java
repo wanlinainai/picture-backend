@@ -235,7 +235,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 更新审核状态
         Picture updatePicture = new Picture();
         BeanUtils.copyProperties(pictureReviewRequest, updatePicture);
-        updatePicture.setReviewId(loginUser.getId());
+        updatePicture.setReviewerId(loginUser.getId());
         updatePicture.setReviewTime(new Date());
         boolean result = this.updateById(updatePicture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
@@ -250,7 +250,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             // 管理员自动过审
             picture.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
             picture.setReviewMessage("管理员自动过审");
-            picture.setReviewId(loginUser.getId());
+            picture.setReviewerId(loginUser.getId());
             picture.setReviewTime(new Date());
         } else {
             // 非管理员，创建或者编辑都需要变成待审核
