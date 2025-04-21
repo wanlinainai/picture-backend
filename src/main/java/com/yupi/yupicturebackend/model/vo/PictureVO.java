@@ -70,7 +70,27 @@ public class PictureVO implements Serializable {
     /**  
      * 用户 id  
      */  
-    private Long userId;  
+    private Long userId;
+
+    /**
+     * 审核信息
+     */
+    private String reviewMessage;
+
+    /**
+     * 审核人 id
+     */
+    private Long reviewerId;
+
+    /**
+     * 审核时间
+     */
+    private Date reviewTime;
+
+    /**
+     * 审核状态
+     */
+    private Integer reviewStatus;
   
     /**  
      * 创建时间  
