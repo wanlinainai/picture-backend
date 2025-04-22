@@ -22,7 +22,7 @@ public interface PictureService extends IService<Picture> {
     /**
      * 上传图片
      */
-    PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser);
+    PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser);
 
     /**
      * 将请求转换成QueryWrapper对象

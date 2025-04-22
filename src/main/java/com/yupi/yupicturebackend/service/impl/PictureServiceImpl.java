@@ -11,6 +11,9 @@ import com.yupi.yupicturebackend.exception.BussinessException;
 import com.yupi.yupicturebackend.exception.ErrorCode;
 import com.yupi.yupicturebackend.exception.ThrowUtils;
 import com.yupi.yupicturebackend.manager.FileManager;
+import com.yupi.yupicturebackend.manager.upload.FilePictureUpload;
+import com.yupi.yupicturebackend.manager.upload.PictureUploadTemplate;
+import com.yupi.yupicturebackend.manager.upload.UrlPictureUpload;
 import com.yupi.yupicturebackend.model.dto.file.UploadPictureResult;
 import com.yupi.yupicturebackend.model.dto.picture.PictureQueryRequest;
 import com.yupi.yupicturebackend.model.dto.picture.PictureUploadRequest;
@@ -24,6 +27,7 @@ import com.yupi.yupicturebackend.service.PictureService;
 import com.yupi.yupicturebackend.mapper.PictureMapper;
 import com.yupi.yupicturebackend.service.UserService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,16 +53,23 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     @Resource
     private UserService userService;
+    @Autowired
+    private FilePictureUpload filePictureUpload;
+    @Autowired
+    private UrlPictureUpload urlPictureUpload;
 
     /**
      * 上传图片
-     * @param multipartFile
+     * @param
      * @param pictureUploadRequest
      * @param loginUser
      * @return
      */
     @Override
-    public PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser) {
+    public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
+        if (inputSource == null) {
+            throw new BussinessException(ErrorCode.PARAMS_ERROR, "图片为空");
+        }
         // 校验参数
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR);
         // 新增还是删除
@@ -67,7 +78,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             pictureId = pictureUploadRequest.getId();
         }
         // 如果是更新，判断图片是否存在
-        if (pictureId != null) {
+        if (pictureId != null && pictureId != 0) {
             boolean exists = this.lambdaQuery()
                     .eq(Picture::getId, pictureId)
                     .exists();
@@ -82,7 +93,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         // 上传图片
         String uploadPathPrefix = String.format("public/%s", loginUser.getId());
-        UploadPictureResult uploadPictureResult = fileManager.uploadPicture(multipartFile, uploadPathPrefix);
+        // 根据inputSource类型区分上传类型
+        PictureUploadTemplate pictureUploadTemplate = filePictureUpload;
+        if (inputSource instanceof String) {
+            pictureUploadTemplate = urlPictureUpload;
+        }
+        UploadPictureResult uploadPictureResult = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix);
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
         picture.setName(uploadPictureResult.getPicName());

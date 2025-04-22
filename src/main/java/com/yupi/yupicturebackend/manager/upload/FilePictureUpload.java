@@ -36,11 +36,13 @@ public class FilePictureUpload extends PictureUploadTemplate{
 
     @Override
     protected String getOriginFileName(Object inputSource) {
-        return "";
+        MultipartFile multipartFile = (MultipartFile) inputSource;
+        return multipartFile.getOriginalFilename();
     }
 
     @Override
     protected void processFile(Object inputSource, File file) throws Exception {
-
+        MultipartFile multipartFile = (MultipartFile) inputSource;
+        multipartFile.transferTo(file);
     }
 }

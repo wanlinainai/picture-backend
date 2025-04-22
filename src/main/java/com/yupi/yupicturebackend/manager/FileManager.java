@@ -34,10 +34,11 @@ import java.util.List;
  * @ClassName: FileManager
  * @Author: zxh
  * @Date: 2025/4/18 22:27
- * @Description:
+ * @Description: 文件管理部分（已废除）
  */
 @Service
 @Slf4j
+@Deprecated
 public class FileManager {
     @Resource
     private CosClientConfig cosClientConfig;
