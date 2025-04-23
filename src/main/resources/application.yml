@@ -1,0 +1,38 @@
+server:
+  port: 8123
+  servlet:
+    context-path: /api
+
+spring:
+  profiles:
+    active: local
+  application:
+    name: yu-picture-backend
+  # 开放更大的文件上传体积
+  servlet:
+    multipart:
+      max-file-size: 10MB
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    # 仅仅在开发环境中打印日志
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #标准日志输出
+  global-config:
+    db-config:
+      logic-delete-field: isDelete # 逻辑删除配置
+      logic-not-delete-value: 0
+      logic-delete-value: 1
+
+knife4j:
+  enable: true
+  openapi:
+    title: 接口文档
+    version: 1.0
+    license: Apache 2.0
+    license-url: https://stackoverflow.com/
+    terms-of-service-url: https://stackoverflow.com/
+    group:
+      default:
+        api-rule: package
+        api-rule-resources:
+          - com.yupi.yupicturebackend.controller
