@@ -2,12 +2,19 @@ server:
   port: 8123
   servlet:
     context-path: /api
+    session:
+      cookie:
+        max-age: 2592000
 
 spring:
   profiles:
     active: local
   application:
     name: yu-picture-backend
+  session:
+    store-type: redis
+    # session过期时间
+    timeout: 2592000
   # 开放更大的文件上传体积
   servlet:
     multipart:
