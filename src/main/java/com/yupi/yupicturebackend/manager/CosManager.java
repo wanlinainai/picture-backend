@@ -71,6 +71,17 @@ public class CosManager {
         compressRule.setRule("imageMogr2/format/webp");
         rules.add(compressRule);
 
+        // 如果是小图片，跳过，只需要对 > 20KB的图片进行压缩
+        if (file.length() > 20 * 1024) {
+            // 缩略图处理
+            PicOperations.Rule thumbnailRule = new PicOperations.Rule();
+            thumbnailRule.setBucket(cosClientConfig.getBucket());
+            String thumbnailKey = FileUtil.mainName(key) + "_thumbnail." + FileUtil.getSuffix(key);
+            thumbnailRule.setFileId(thumbnailKey);
+            thumbnailRule.setRule(String.format("imageMogr2/thumbnail/%sx%s>", 128, 128));
+            rules.add(thumbnailRule);
+        }
+
         // 构造处理函数
         picOperations.setRules(rules);
         putObjectRequest.setPicOperations(picOperations);

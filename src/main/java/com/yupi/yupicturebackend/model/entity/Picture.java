@@ -120,4 +120,9 @@ public class Picture implements Serializable {
      */
     @TableLogic
     private Integer isDelete;
+
+    /**
+     * 缩略图 URL
+     */
+    private String thumbnailUrl;
 }
