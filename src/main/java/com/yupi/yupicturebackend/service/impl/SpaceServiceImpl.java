@@ -19,8 +19,10 @@ import com.yupi.yupicturebackend.model.vo.UserVo;
 import com.yupi.yupicturebackend.service.SpaceService;
 import com.yupi.yupicturebackend.mapper.SpaceMapper;
 import com.yupi.yupicturebackend.service.UserService;
+import net.bytebuddy.implementation.bytecode.Throw;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -42,6 +44,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
     @Resource
     private UserService userService;
 
+    @Resource
+    private TransactionTemplate transcationTemplate;
+
     @Override
     public long addSpace(SpaceAddRequest spaceAddRequest, User loginUser) {
         // 1. 填充参数的默认值
@@ -55,12 +60,28 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         }
         // 填充容量和大小
         this.fillSpaceBySpaceLevel(space);
-
         // 2. 校验参数
-
+        this.validSpace(space, true);
+        Long userId = loginUser.getId();
+        space.setUserId(userId);
         // 3. 校验权限，非管理员只能创建普通级别空间
+        if (SpaceLevelEnum.COMMON.getValue() != spaceAddRequest.getSpaceLevel() && !userService.isAdmin(loginUser)) {
+            throw new BussinessException(ErrorCode.PARAMS_ERROR, "暂无权限创建指定级别的空间");
+        }
         // 4. 同一个用户只能创建一个空间
-        return 0;
+        String lock = String.valueOf(userId).intern();
+        synchronized (lock) {
+            // 我们不使用@Transational注解
+            Long newSpaceId = transcationTemplate.execute(status -> {
+                boolean exists = this.lambdaQuery().eq(Space::getUserId, userId).exists();
+                ThrowUtils.throwIf(exists, ErrorCode.OPERATION_ERROR, "每一个用户只能创建一个空间");
+                // 入库
+                boolean result = this.save(space);
+                ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "空间保存失败");
+                return space.getId();
+            });
+            return newSpaceId;
+        }
     }
 
     @Override
