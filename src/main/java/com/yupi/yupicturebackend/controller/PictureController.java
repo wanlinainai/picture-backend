@@ -17,10 +17,12 @@ import com.yupi.yupicturebackend.model.dto.picture.*;
 import com.yupi.yupicturebackend.model.dto.pictureReview.PictureReviewRequest;
 import com.yupi.yupicturebackend.model.entity.Picture;
 import com.yupi.yupicturebackend.model.entity.PictureTagCategory;
+import com.yupi.yupicturebackend.model.entity.Space;
 import com.yupi.yupicturebackend.model.entity.User;
 import com.yupi.yupicturebackend.model.enums.PictureReviewStatusEnum;
 import com.yupi.yupicturebackend.model.vo.PictureVO;
 import com.yupi.yupicturebackend.service.PictureService;
+import com.yupi.yupicturebackend.service.SpaceService;
 import com.yupi.yupicturebackend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -47,6 +49,8 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/picture")
 @Slf4j
 public class PictureController {
+    @Resource
+    private SpaceService spaceService;
     @Resource
     private PictureService pictureService;
 
@@ -103,9 +107,7 @@ public class PictureController {
         Picture oldPicture = pictureService.getById(id);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
         // 仅仅本人或者管理员可以删除
-        if (!oldPicture.getUserId().equals(loginUser.getId()) || !userService.isAdmin(loginUser)) {
-            throw new BussinessException(ErrorCode.FORBIDDEN_ERROR, "无删除权限");
-        }
+        pictureService.checkPictureAuth(loginUser, oldPicture);
         // 操作数据库
         boolean result = pictureService.removeById(id);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "删除失败");
@@ -146,6 +148,12 @@ public class PictureController {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         Picture picture = pictureService.getById(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
+        // 空间校验权限
+        Long spaceId = picture.getSpaceId();
+        if (spaceId != null) {
+            User loginUser = userService.getLoginUser(request);
+            pictureService.checkPictureAuth(loginUser, picture);
+        }
         // 获取封装类
         return ResultUtils.success(pictureService.getPictureVO(picture, request));
     }
@@ -182,6 +190,20 @@ public class PictureController {
         pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
 
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size), pictureService.getQueryWrapper(pictureQueryRequest));
+        // 权限校验
+        Long spaceId = pictureQueryRequest.getSpaceId();
+        if (spaceId == null) {
+            // 普通用户默认只能查看已经过审的数据
+            pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+            pictureQueryRequest.setNullSpaceId(true);
+        } else {
+            User loginUser = userService.getLoginUser(request);
+            Space space = spaceService.getById(spaceId);
+            ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
+            if (!loginUser.getId().equals(space.getUserId())) {
+                throw new BussinessException(ErrorCode.NO_AUTH_ERROR, "暂无空间权限");
+            }
+        }
         return ResultUtils.success(pictureService.getPictureVOPage(picturePage, request));
     }
 
@@ -260,9 +282,7 @@ public class PictureController {
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
         // 只能本人或者管理员编辑
         User loginUser = userService.getLoginUser(request);
-        if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-            throw new BussinessException(ErrorCode.NO_AUTH_ERROR, "无编辑权限");
-        }
+        pictureService.checkPictureAuth(loginUser, oldPicture);
 
         pictureService.fillReviewParams(picture, loginUser);
 
