@@ -99,14 +99,14 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
             if (spaceLevel == null) {
                 throw new BussinessException(ErrorCode.PARAMS_ERROR, "空间级别不能为空");
             }
-        }
-
-        // 修改数据时，分别判断空间名称和空间级别
-        if (StrUtil.isNotBlank(spaceName) && spaceName.length() > 30) {
-            throw new BussinessException(ErrorCode.PARAMS_ERROR, "空间名称太长");
-        }
-        if (spaceLevel != null || spaceLevelEnum == null) {
-            throw new BussinessException(ErrorCode.PARAMS_ERROR, "空间级别不存在");
+        } else {
+            // 修改数据时，分别判断空间名称和空间级别
+            if (StrUtil.isNotBlank(spaceName) && spaceName.length() > 30) {
+                throw new BussinessException(ErrorCode.PARAMS_ERROR, "空间名称太长");
+            }
+            if (spaceLevel != null || spaceLevelEnum == null) {
+                throw new BussinessException(ErrorCode.PARAMS_ERROR, "空间级别不存在");
+            }
         }
     }
 

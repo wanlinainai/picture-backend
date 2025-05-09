@@ -205,7 +205,6 @@ public class PictureController {
         // 普通用户只能查看审核通过的图片
         pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
 
-        Page<Picture> picturePage = pictureService.page(new Page<>(current, size), pictureService.getQueryWrapper(pictureQueryRequest));
         // 权限校验
         Long spaceId = pictureQueryRequest.getSpaceId();
         if (spaceId == null) {
@@ -221,6 +220,8 @@ public class PictureController {
                 throw new BussinessException(ErrorCode.NO_AUTH_ERROR, "暂无空间权限");
             }
         }
+        Page<Picture> picturePage = pictureService.page(new Page<>(current, size), pictureService.getQueryWrapper(pictureQueryRequest));
+
         return ResultUtils.success(pictureService.getPictureVOPage(picturePage, request));
     }
 
