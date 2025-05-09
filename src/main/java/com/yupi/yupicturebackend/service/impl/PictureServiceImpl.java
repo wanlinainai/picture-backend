@@ -30,6 +30,7 @@ import com.yupi.yupicturebackend.mapper.PictureMapper;
 import com.yupi.yupicturebackend.service.SpaceService;
 import com.yupi.yupicturebackend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.implementation.bytecode.Throw;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -37,6 +38,7 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -69,6 +71,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private UrlPictureUpload urlPictureUpload;
     @Autowired
     private SpaceService spaceService;
+    @Resource
+    private TransactionTemplate transactionTemplate;
 
     /**
      * 上传图片
@@ -92,6 +96,13 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             // 只有空间创建人才能上传
             if (!loginUser.getId().equals(space.getUserId())) {
                 throw new BussinessException(ErrorCode.NO_AUTH_ERROR, "暂无空间权限");
+            }
+            // 校验额度
+            if (space.getTotalCount() >= space.getMaxCount()) {
+                throw new BussinessException(ErrorCode.OPERATION_ERROR, "空间条数不足");
+            }
+            if (space.getTotalSize() >= space.getMaxSize()) {
+                throw new BussinessException(ErrorCode.OPERATION_ERROR, "空间大小不足");
             }
         }
         // 新增还是删除
@@ -130,6 +141,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         if (spaceId == null) {
             uploadPathPrefix = String.format("public/%s", loginUser.getId());
         } else {
+            // 上传到私有空间
             uploadPathPrefix = String.format("space/%s", spaceId);
         }
         // 根据inputSource类型区分上传类型
@@ -163,6 +175,21 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             picture.setId(pictureId);
             picture.setEditTime(new Date());
         }
+        // 更新空间的使用额度
+        Long finalSpaceId = spaceId;
+        transactionTemplate.execute(status -> {
+            // 插入数据
+            boolean result = this.saveOrUpdate(picture);
+            ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片上传失败，数据库操作失败");
+            boolean update = spaceService.lambdaUpdate()
+                    .eq(Space::getId, finalSpaceId)
+                    .setSql("totalSize = totalSize + " + picture.getPicSize())
+                    .setSql("totalCount = totalCount + 1")
+                    .update();
+            ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "额度更新失败");
+            return picture;
+        });
+
         boolean result = this.saveOrUpdate(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片上传失败，数据库操作失败");
         return PictureVO.objToVo(picture);
@@ -383,6 +410,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     public void checkPictureAuth(User loginUser, Picture picture) {
         Long spaceId = picture.getSpaceId();
         if (spaceId == null) {
+            // 公共图库,仅仅本人和管理员可以删除
             if (!picture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
                 throw new BussinessException(ErrorCode.NO_AUTH_ERROR);
             }
