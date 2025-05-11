@@ -104,7 +104,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
             if (StrUtil.isNotBlank(spaceName) && spaceName.length() > 30) {
                 throw new BussinessException(ErrorCode.PARAMS_ERROR, "空间名称太长");
             }
-            if (spaceLevel != null || spaceLevelEnum == null) {
+            if (spaceLevel == null || spaceLevelEnum == null) {
                 throw new BussinessException(ErrorCode.PARAMS_ERROR, "空间级别不存在");
             }
         }
