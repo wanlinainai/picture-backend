@@ -110,7 +110,12 @@ public class PictureVO implements Serializable {
     /**  
      * 更新时间  
      */  
-    private Date updateTime;  
+    private Date updateTime;
+
+    /**
+     * 空间id
+     */
+    private Long spaceId;
   
     /**  
      * 创建用户信息  

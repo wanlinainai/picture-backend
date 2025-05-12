@@ -117,13 +117,17 @@ public class PictureController {
             // 操作数据库
             boolean result = pictureService.removeById(id);
             ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "删除失败");
-            // 更新空间的使用额度
-            boolean update = spaceService.lambdaUpdate()
-                    .eq(Space::getId, oldPicture.getSpaceId())
-                    .setSql("totalSize = totalSize - " + oldPicture.getPicSize())
-                    .setSql("totalCount = totalCount - 1")
-                    .update();
-            ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "额度更新失败");
+            // 如果是spaceId是NULL的，直接跳过额度校验
+            if (oldPicture.getSpaceId() != null) {
+                // 更新空间的使用额度
+                boolean update = spaceService.lambdaUpdate()
+                        .eq(Space::getId, oldPicture.getSpaceId())
+                        .setSql("totalSize = totalSize - " + oldPicture.getPicSize())
+                        .setSql("totalCount = totalCount - 1")
+                        .update();
+                ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "额度更新失败");
+            }
+
             return true;
         });
         return ResultUtils.success(true);
