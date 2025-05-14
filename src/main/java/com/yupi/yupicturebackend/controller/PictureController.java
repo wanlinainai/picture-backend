@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.yupi.yupicturebackend.annotation.AuthCheck;
+import com.yupi.yupicturebackend.api.imageSearch.ImageSearchApiFacade;
+import com.yupi.yupicturebackend.api.imageSearch.model.ImageSearchResult;
 import com.yupi.yupicturebackend.common.BaseResponse;
 import com.yupi.yupicturebackend.common.DeleteRequest;
 import com.yupi.yupicturebackend.common.ResultUtils;
@@ -39,6 +41,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -348,4 +351,19 @@ public class PictureController {
         int uploadCount = pictureService.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
         return ResultUtils.success(uploadCount);
     }
+
+    /**
+     * 以图生图接口
+     */
+    @PostMapping("/search/picture")
+    public BaseResponse<List<ImageSearchResult>> searchPictureByPicture(@RequestBody SearchPictureByPictureRequest searchPictureByPictureRequest) {
+        ThrowUtils.throwIf(searchPictureByPictureRequest == null, ErrorCode.PARAMS_ERROR);
+        Long pictureId = searchPictureByPictureRequest.getPictureId();
+        ThrowUtils.throwIf(pictureId == null || pictureId <= 0, ErrorCode.PARAMS_ERROR);
+        Picture picture = pictureService.getById(pictureId);
+        ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
+        List<ImageSearchResult> resultList = ImageSearchApiFacade.searchImage(picture.getUrl());
+        return ResultUtils.success(resultList);
+    }
+
 }
