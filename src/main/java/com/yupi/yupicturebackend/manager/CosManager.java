@@ -64,11 +64,11 @@ public class CosManager {
 
         List<PicOperations.Rule> rules = new ArrayList<>();
         // 图片压缩
-        String webpKey = FileUtil.mainName(key) + ".webp";
+        String webpKey = FileUtil.mainName(key) + ".png";
         PicOperations.Rule compressRule = new PicOperations.Rule();
         compressRule.setFileId(webpKey);
         compressRule.setBucket(cosClientConfig.getBucket());
-        compressRule.setRule("imageMogr2/format/webp");
+        compressRule.setRule("imageMogr2/format/png");
         rules.add(compressRule);
 
         // 如果是小图片，跳过，只需要对 > 20KB的图片进行压缩
