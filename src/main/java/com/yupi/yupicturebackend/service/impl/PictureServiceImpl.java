@@ -461,7 +461,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                     }
                     Color pictureColor = Color.decode(hexColor);
                     // 越大越相似
-                    return ColorSimilarUtils.calculateSimilarity(targetColor, pictureColor);
+                    return -ColorSimilarUtils.calculateSimilarity(targetColor, pictureColor);
                 }))
                 .limit(12)
                 .collect(Collectors.toList());
