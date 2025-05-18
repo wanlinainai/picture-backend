@@ -97,7 +97,9 @@ public abstract class PictureUploadTemplate {
         uploadPictureResult.setPicSize(compressedCiObject.getSize().longValue());
         uploadPictureResult.setPicScale(picScale);
         uploadPictureResult.setPicFormat(compressedCiObject.getFormat());
-        uploadPictureResult.setThumbnailUrl(cosClientConfig.getHost() + "/" + thumbnailCiObject.getKey());
+        if (thumbnailCiObject != null) {
+            uploadPictureResult.setThumbnailUrl(cosClientConfig.getHost() + "/" + thumbnailCiObject.getKey());
+        }
         // 设置主色调
         uploadPictureResult.setPicColor(imageInfo.getAve());
         return uploadPictureResult;
